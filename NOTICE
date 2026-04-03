@@ -1,0 +1,14 @@
+setup-arctl
+Copyright 2024 Andy Airey
+
+This GitHub Action downloads and installs the arctl CLI binary from the
+agentregistry project (https://github.com/agentregistry-dev/agentregistry),
+which is licensed under the Apache License, Version 2.0.
+
+The arctl binary distributed via agentregistry-dev/agentregistry releases
+is copyright of its respective authors. This action does not modify or
+redistribute the arctl binary itself — it only automates the download and
+installation of the binary from the official upstream release.
+
+This product includes software developed by the agentregistry-dev project
+(https://github.com/agentregistry-dev/agentregistry).
