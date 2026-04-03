@@ -18,50 +18,35 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Fetch release checksums
+    - name: Download arctl binary and verify checksum
       shell: bash
       env:
         ARCTL_VERSION: ${{ inputs.version }}
-      run: |
-        curl -sSL \
-          "https://github.com/agentregistry-dev/agentregistry/releases/download/v${ARCTL_VERSION}/checksums.txt" \
-          -o /tmp/arctl-checksums.txt
-        cat /tmp/arctl-checksums.txt
-
-    - name: Download arctl binary
-      shell: bash
-      env:
-        ARCTL_VERSION: ${{ inputs.version }}
+        INSTALL_DIR: ${{ inputs.install-dir }}
       run: |
         OS=$(uname -s | tr '[:upper:]' '[:lower:]')
         ARCH=$(uname -m)
-        # Normalise arm64 / aarch64
         [ "$ARCH" = "aarch64" ] && ARCH="arm64"
+        [ "$ARCH" = "x86_64" ]  && ARCH="amd64"
         BINARY="arctl-${OS}-${ARCH}"
+
         echo "Downloading ${BINARY} v${ARCTL_VERSION}..."
         curl -sSL \
           "https://github.com/agentregistry-dev/agentregistry/releases/download/v${ARCTL_VERSION}/${BINARY}" \
           -o /tmp/arctl
-        echo "ARCTL_BINARY=${BINARY}" >> "$GITHUB_ENV"
 
-    - name: Verify checksum
-      shell: bash
-      run: |
-        # Extract the expected checksum for this binary from the release checksums file
-        EXPECTED=$(grep "$ARCTL_BINARY" /tmp/arctl-checksums.txt | awk '{print $1}')
+        echo "Verifying checksum..."
+        EXPECTED=$(curl -sSL \
+          "https://github.com/agentregistry-dev/agentregistry/releases/download/v${ARCTL_VERSION}/${BINARY}.sha256" \
+          | awk '{print $1}')
         if [ -z "$EXPECTED" ]; then
-          echo "Error: checksum not found for $ARCTL_BINARY in checksums.txt"
+          echo "Error: could not fetch checksum for ${BINARY}"
           exit 1
         fi
         echo "${EXPECTED}  /tmp/arctl" | sha256sum --check --strict
-        echo "✓ Checksum verified for $ARCTL_BINARY"
+        echo "Checksum verified for ${BINARY}"
 
-    - name: Install arctl
-      shell: bash
-      env:
-        INSTALL_DIR: ${{ inputs.install-dir }}
-      run: |
         chmod +x /tmp/arctl
         mv /tmp/arctl "${INSTALL_DIR}/arctl"
-        echo "arctl installed to ${INSTALL_DIR}/arctl"
+        echo "arctl ${ARCTL_VERSION} installed to ${INSTALL_DIR}/arctl"
         arctl version
