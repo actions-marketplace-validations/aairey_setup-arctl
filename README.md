@@ -1,24 +1,24 @@
 # setup-arctl
 
-GitHub Action to install and verify the [`arctl`](https://github.com/agentregistry-dev/agentregistry) CLI.
+GitHub Action to install and verify the [`arctl`](https://github.com/agentregistry-dev/agentregistry) CLI from official GitHub releases.
 
-Downloads the binary from the official GitHub release, verifies the SHA256 checksum from the release's `checksums.txt`, and installs it to PATH.
+Downloads the binary for the current OS/architecture, verifies the SHA256 checksum from the upstream `.sha256` release asset, and installs it to PATH.
 
 ## Usage
 
 ```yaml
-- uses: aairey/setup-arctl@v1
+- uses: aairey/setup-arctl@v1.0.0
 ```
 
 ### With a specific version
 
 ```yaml
-- uses: aairey/setup-arctl@v1
+- uses: aairey/setup-arctl@v1.0.0
   with:
     version: '0.3.3'
 ```
 
-### Full example
+### Full example — publish prompts to agentregistry
 
 ```yaml
 jobs:
@@ -29,21 +29,26 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
 
-      - uses: aairey/setup-arctl@v1
+      - uses: aairey/setup-arctl@v1.0.0
         with:
           version: '0.3.3'
 
       - name: Publish prompts
         env:
-          AGENTREGISTRY_URL: ${{ secrets.AGENTREGISTRY_URL }}
-          AREGISTRY_TOKEN: ${{ secrets.AREGISTRY_TOKEN }}
+          ARCTL_API_TOKEN: ${{ secrets.ARCTL_API_TOKEN }}
+          ARCTL_API_BASE_URL: ${{ secrets.AGENTREGISTRY_URL }}
         run: |
-          arctl auth login --token "$AREGISTRY_TOKEN" --url "$AGENTREGISTRY_URL"
-          arctl prompt publish prompts/my-prompt.yaml --registry-url "$AGENTREGISTRY_URL"
+          find prompts -name '*.yaml' | while read -r file; do
+            arctl prompt publish "$file"
+          done
 ```
+
+> **Note:** `ARCTL_API_TOKEN` is the bearer token for your agentregistry instance.
+> `ARCTL_API_BASE_URL` is the base URL of your registry (e.g. `https://agentregistry.example.com`).
+> Both are read automatically by `arctl` — no `--registry-url` or `--registry-token` flags needed.
 
 ## Inputs
 
@@ -54,10 +59,11 @@ jobs:
 
 ## How it works
 
-1. Downloads `checksums.txt` from the GitHub release
-2. Downloads the `arctl` binary for the current OS/architecture
-3. Verifies the SHA256 checksum against `checksums.txt`
-4. Installs the verified binary to `install-dir`
+1. Detects the current OS and architecture (`linux/darwin` × `amd64/arm64`)
+2. Downloads the matching `arctl` binary from the GitHub release
+3. Fetches the corresponding `.sha256` file from the same release
+4. Verifies SHA256 checksum — fails the step if it doesn't match
+5. Installs the verified binary to `install-dir`
 
 ## Supported platforms
 
@@ -66,3 +72,7 @@ jobs:
 | Linux | amd64, arm64 |
 | macOS | amd64, arm64 |
 | Windows | amd64 |
+
+## License
+
+[Apache 2.0](LICENSE) — see [NOTICE](NOTICE) for upstream attribution.
