@@ -46,9 +46,15 @@ jobs:
           done
 ```
 
-> **Note:** `ARCTL_API_TOKEN` is the bearer token for your agentregistry instance.
-> `ARCTL_API_BASE_URL` is the base URL of your registry (e.g. `https://agentregistry.example.com`).
+> **Connectivity:** Two environment variables are required to reach your agentregistry instance:
+>
+> | Variable | Description | Example |
+> |----------|-------------|---------|
+> | `ARCTL_API_BASE_URL` | Full base URL of the registry (include `https://`) | `https://agentregistry.example.com` |
+> | `ARCTL_API_TOKEN` | Bearer token for authentication | *(from your identity provider)* |
+>
 > Both are read automatically by `arctl` — no `--registry-url` or `--registry-token` flags needed.
+> Store them as secrets and pass via `env:` in your job steps.
 
 ## Inputs
 
