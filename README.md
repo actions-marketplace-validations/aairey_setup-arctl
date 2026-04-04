@@ -1,5 +1,10 @@
 # setup-arctl
 
+[![Latest release](https://img.shields.io/github/v/release/aairey/setup-arctl?label=action&logo=github)](https://github.com/aairey/setup-arctl/releases/latest)
+[![arctl version](https://img.shields.io/github/v/release/agentregistry-dev/agentregistry?label=arctl%20default&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0tMiAxNWwtNS01IDEuNDEtMS40MUwxMCAxNC4xN2w3LjU5LTcuNTlMMTkgOGwtOSA5eiIvPjwvc3ZnPg==)](https://github.com/agentregistry-dev/agentregistry/releases/latest)
+[![License](https://img.shields.io/github/license/aairey/setup-arctl)](LICENSE)
+[![Platforms](https://img.shields.io/badge/platform-linux%20%7C%20macos%20%7C%20windows-blue)](#supported-platforms)
+
 GitHub Action to install and verify the [`arctl`](https://github.com/agentregistry-dev/agentregistry) CLI from official GitHub releases.
 
 Downloads the binary for the current OS/architecture, verifies the SHA256 checksum from the upstream `.sha256` release asset, and installs it to PATH.
