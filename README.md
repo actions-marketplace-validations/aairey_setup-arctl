@@ -35,6 +35,9 @@ jobs:
       - uses: aairey/setup-arctl@v1.0.0
         with:
           version: '0.3.3'
+        env:
+          ARCTL_API_BASE_URL: ${{ secrets.ARCTL_API_BASE_URL }}
+          ARCTL_API_TOKEN: ${{ secrets.ARCTL_API_TOKEN }}
 
       - name: Publish prompts
         env:
