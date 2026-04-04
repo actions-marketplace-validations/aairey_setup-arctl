@@ -18,11 +18,11 @@ Downloads the binary for the current OS/architecture, verifies the SHA256 checks
     version: '0.3.3'
 ```
 
-### Full example — publish prompts to agentregistry
+### Publish prompts
 
 ```yaml
 jobs:
-  publish:
+  publish-prompts:
     runs-on: self-hosted
     container:
       image: public.ecr.aws/docker/library/debian:bookworm-slim
@@ -42,11 +42,75 @@ jobs:
       - name: Publish prompts
         env:
           ARCTL_API_TOKEN: ${{ secrets.ARCTL_API_TOKEN }}
-          ARCTL_API_BASE_URL: ${{ secrets.AGENTREGISTRY_URL }}
+          ARCTL_API_BASE_URL: ${{ secrets.ARCTL_API_BASE_URL }}
         run: |
           find prompts -name '*.yaml' | while read -r file; do
             arctl prompt publish "$file"
           done
+```
+
+### Publish skills
+
+```yaml
+jobs:
+  publish-skills:
+    runs-on: self-hosted
+    container:
+      image: public.ecr.aws/docker/library/debian:bookworm-slim
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+
+      - uses: aairey/setup-arctl@v1.0.0
+        with:
+          version: '0.3.3'
+        env:
+          ARCTL_API_BASE_URL: ${{ secrets.ARCTL_API_BASE_URL }}
+          ARCTL_API_TOKEN: ${{ secrets.ARCTL_API_TOKEN }}
+
+      - name: Publish skills
+        env:
+          ARCTL_API_TOKEN: ${{ secrets.ARCTL_API_TOKEN }}
+          ARCTL_API_BASE_URL: ${{ secrets.ARCTL_API_BASE_URL }}
+        run: |
+          for skill_dir in skills/*/; do
+            if [[ -f "$skill_dir/skill.yaml" ]]; then
+              VERSION=$(grep '^version:' "$skill_dir/skill.yaml" | awk '{print $2}')
+              arctl skill publish --path "$skill_dir" --version "$VERSION"
+            fi
+          done
+```
+
+### Deploy agent
+
+```yaml
+jobs:
+  deploy-agent:
+    runs-on: self-hosted
+    container:
+      image: public.ecr.aws/docker/library/debian:bookworm-slim
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: apt-get update && apt-get install -y --no-install-recommends curl ca-certificates
+
+      - uses: aairey/setup-arctl@v1.0.0
+        with:
+          version: '0.3.3'
+        env:
+          ARCTL_API_BASE_URL: ${{ secrets.ARCTL_API_BASE_URL }}
+          ARCTL_API_TOKEN: ${{ secrets.ARCTL_API_TOKEN }}
+
+      - name: Deploy agent
+        env:
+          ARCTL_API_TOKEN: ${{ secrets.ARCTL_API_TOKEN }}
+          ARCTL_API_BASE_URL: ${{ secrets.ARCTL_API_BASE_URL }}
+        run: |
+          VERSION=$(grep '^version:' agent.yaml | awk '{print $2}')
+          arctl agent deploy --version "$VERSION" --namespace "${{ vars.DEPLOY_NAMESPACE }}"
 ```
 
 > **Connectivity:** Two environment variables are required to reach your agentregistry instance:
