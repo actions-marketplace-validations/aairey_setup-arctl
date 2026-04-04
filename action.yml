@@ -18,6 +18,21 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Check OS compatibility
+      shell: bash
+      run: |
+        OS=$(uname -s)
+        if [ "$OS" != "Linux" ]; then
+          echo "Error: setup-arctl only supports Linux. Current OS: $OS"
+          exit 1
+        fi
+
+    - name: Install dependencies
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends curl ca-certificates
+
     - name: Download arctl binary and verify checksum
       shell: bash
       env:
@@ -47,6 +62,6 @@ runs:
         echo "Checksum verified for ${BINARY}"
 
         chmod +x /tmp/arctl
-        mv /tmp/arctl "${INSTALL_DIR}/arctl"
+        sudo mv /tmp/arctl "${INSTALL_DIR}/arctl"
         echo "arctl ${ARCTL_VERSION} installed to ${INSTALL_DIR}/arctl"
         arctl version
