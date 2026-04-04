@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: write
+  issues: write
+  pull-requests: write
 
 jobs:
   release:
@@ -18,63 +20,20 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine version bump
-        id: version
-        run: |
-          # Get the last tag
-          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
-          LAST_VERSION=${LAST_TAG#v}
-
-          # Parse version
-          IFS='.' read -r MAJOR MINOR PATCH <<< "$LAST_VERSION"
-          MAJOR=${MAJOR:-0}
-          MINOR=${MINOR:-0}
-          PATCH=${PATCH:-0}
-
-          # Check commits since last tag for conventional commit prefixes
-          COMMITS=$(git log ${LAST_TAG}..HEAD --pretty=format:"%s" 2>/dev/null || git log --pretty=format:"%s")
-
-          if echo "$COMMITS" | grep -q "^BREAKING CHANGE\|^feat!"; then
-            MAJOR=$((MAJOR + 1))
-            MINOR=0
-            PATCH=0
-          elif echo "$COMMITS" | grep -q "^feat"; then
-            MINOR=$((MINOR + 1))
-            PATCH=0
-          elif echo "$COMMITS" | grep -q "^fix\|^chore"; then
-            PATCH=$((PATCH + 1))
-          fi
-
-          NEW_VERSION="v${MAJOR}.${MINOR}.${PATCH}"
-          echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
-          echo "Version: $NEW_VERSION"
-
-      - name: Check if tag exists
-        id: tag_check
-        run: |
-          if git rev-parse "refs/tags/${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
-            echo "exists=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create tag
-        if: steps.tag_check.outputs.exists == 'false'
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git tag -a ${{ steps.version.outputs.version }} -m "Release ${{ steps.version.outputs.version }}"
-          git push origin ${{ steps.version.outputs.version }}
-
-      - name: Create release
-        if: steps.tag_check.outputs.exists == 'false'
-        uses: softprops/action-gh-release@v2
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          tag_name: ${{ steps.version.outputs.version }}
-          name: Release ${{ steps.version.outputs.version }}
-          body: |
-            Automated release based on conventional commits.
-          draft: false
-          prerelease: false
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Release
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          branches: |
+            [
+              'main'
+            ]
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
